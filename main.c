@@ -1,14 +1,18 @@
-#include <stdio.h>
 #include <unistd.h>
+#include <termios.h>
 
-// canonical mode --> raw mode
-// read() ?
-// STDIN_FILENO 
+void enable_terminal_raw_mode() {
+    struct termios raw;
+    tcgetattr(STDIN_FILENO, &raw);
+    raw.c_lflag &= ~(ECHO);
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
 
 int main() {
     char c;
+    enable_terminal_raw_mode();
     while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q'){
-       putc(c, stdout); 
+        write(STDOUT_FILENO, &c, 1);        
     }
     return 0;
 }
