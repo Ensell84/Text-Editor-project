@@ -53,14 +53,14 @@ by passing `STDIN_FILENO` we work with terminal from wich our program is
 started(controlling terminal for that session)
 
 ### Other termios flags:
-`ICANON` -- disables canonical mode now every keypress sends directly to program
-`ISIG` -- disables Ctrl + Z / Ctrl + C / Ctrl + Y
-`IXON` -- disable Ctrl + S / Ctrl + Q
-`IEXTEN` -- disable Ctrl + V delay
-`ICRNL` -- disables mapping Ctrl + M(CR) to ENTER
-`OPOST` -- turn off output processing
-    by default terminal translates '\n' -> '\r\n'
-    when disabled -> after pressing ENT cursor only moves down
+- `ICANON` -- disables canonical mode now every keypress sends directly to program
+- `ISIG` -- disables Ctrl + Z / Ctrl + C / Ctrl + Y
+- `IXON` -- disable Ctrl + S / Ctrl + Q
+- `IEXTEN` -- disable Ctrl + V delay
+- `ICRNL` -- disables mapping Ctrl + M(CR) to ENTER
+- `OPOST` -- turn off output processing
+	- by default terminal translates '\n' -> '\r\n' 
+	- when disabled -> after pressing ENT cursor only moves down
 
 
 ### miscellaneous functions
@@ -78,27 +78,27 @@ that hasn’t been read.
 32 - 126 --- Printable characters
 
 Arrow keys + pageUp/pageDown + home/end --- send 3 or 4 bytes to term
-27[C -- Right Arrow
-27[D -- Left Arrow
-...
+- 27[C -- Right Arrow
+- 27[D -- Left Arrow
+- ...
+
 They all start from ESC(27) and called **Escape Sequences**
 
 Other Symbols and ESC sequences
-Enter - 10 ('\n')
-Backscape - 127 
-Ctrl + A - 1
-Ctrl + B - 2
-...
-Ctrl + Z - 26
+- Enter - 10 ('\n')
+- Backscape - 127 
+- Ctrl + A - 1
+- Ctrl + B - 2
+- ...
+- Ctrl + Z - 26
 
 To be aware of:
-Ctrl + C -- terminates program (SIGINT)
-Ctrl + Y/Z -- suspends program (SIGTSTP)
-Ctrl + S -- program stops sending you output (until u press Ctrl + Q)
-    it is named software flow control (link...)
-Ctrl + V -- waits for next symbol to send it to terminal 
-Ctrl + M -- translates to ENTER(10), because terminal translates 
-    13(Ctrl+M) which is CR('\r') to new line - ENTER('\n')
+- Ctrl + C -- terminates program (SIGINT)
+- Ctrl + Y/Z -- suspends program (SIGTSTP)
+- Ctrl + S -- program stops sending you output (until u press Ctrl + Q)
+    - it is named software flow control (link...)
+- Ctrl + V -- waits for next symbol to send it to terminal 
+- Ctrl + M -- translates to ENTER(10), because terminal translates 13(Ctrl+M) which is CR('\r') to new line - ENTER('\n')
 
 `iscntrl()` --- function from <ctype.h>, detects cntrl symbols
 
