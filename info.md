@@ -62,6 +62,10 @@ started(controlling terminal for that session)
 	- by default terminal translates '\n' -> '\r\n' 
 	- when disabled -> after pressing ENT cursor only moves down
 
+Special control characters (`c_cc` field of termios structure):
+- `VMIN` -- minimum amount of bytes to `read()` return
+- `VTIME` -- amount of time `read()` wates before return
+if `read()` times out -> it returns 0
 
 ### miscellaneous functions
 
@@ -103,3 +107,9 @@ To be aware of:
 `iscntrl()` --- function from <ctype.h>, detects cntrl symbols
 
 - как отличить TAB от Ctrl + A если оба map-аются на 9 
+
+### Error handling
+Most C stand func when fail set global var `errno` to indicate that error happened
+    and also most times they return `-1` value
+`perror(str)` --- looks at `errno` and prints descriptive error msg + str given to it
+
