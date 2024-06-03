@@ -106,10 +106,26 @@ To be aware of:
 
 `iscntrl()` --- function from <ctype.h>, detects cntrl symbols
 
-- как отличить TAB от Ctrl + A если оба map-аются на 9 
+
+We can check if input byte(char) is `Ctrl + key` symbol:
+```C
+#define KEY_CTRL(c) (c & 0x1f)
+```
+ox1f = 00011111 
+so by bitwise AND operation we cut off 3 upper bits which is equal to 
+    c & 0x1f = c - 64 - 32 = c - 96
+ASCii table designed so, that by substracting 96 we jump from x asci symbol
+to Ctrl + x symbol.
+
 
 ### Error handling
 Most C stand func when fail set global var `errno` to indicate that error happened
     and also most times they return `-1` value
 `perror(str)` --- looks at `errno` and prints descriptive error msg + str given to it
 
+
+
+### Algorithmic functions:
+- search + ???(replace?)
+- syntax highlight
+- undo/redo + tree representation and Branching system inside editor
