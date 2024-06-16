@@ -117,6 +117,10 @@ so by bitwise AND operation we cut off 3 upper bits which is equal to
 ASCii table designed so, that by substracting 96 we jump from x asci symbol
 to Ctrl + x symbol.
 
+### Escape sequences:
+`\x1b[2J` -- clear all screen (1J - to pos of cursor, 0J - from pos of cursor to end)
+`\x1b[H` -- cursor to home position (0,0)
+
 
 ### Error handling
 Most C stand func when fail set global var `errno` to indicate that error happened
@@ -125,7 +129,8 @@ Most C stand func when fail set global var `errno` to indicate that error happen
 
 
 
-### Algorithmic functions:
+### To Implement Features: 
 - search + ???(replace?)
 - syntax highlight
 - undo/redo + tree representation and Branching system inside editor
+- Plugin System using Shared Objects (move syntax highlight to Plugin)
