@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <termios.h>
 #include <stdlib.h>
@@ -8,13 +9,13 @@
 
 #define KEY_CTRL(c) (c & 0x1f)
 
-struct editor_state {
+typedef struct {
     int screenrows;
     int screencols;
     struct termios original_termios;
-};
+}editorState;
 
-struct editor_state E;
+editorState editorData;
 
 /***Miscellaneous***/
 
@@ -33,7 +34,7 @@ void error_handler(const char* s) {
 /***terminal***/
 
 void disable_terminal_raw_mode() {
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.original_termios) == -1) 
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &editorData.original_termios) == -1) 
         error_handler("tcsetattr at disable_terminal_raw_mode()");
 }
 
@@ -41,11 +42,11 @@ void enable_terminal_raw_mode() {
     // save original terminal termios structure to 
     // return terminal to original state, when we
     // finish execution of our program
-    if (tcgetattr(STDIN_FILENO, &E.original_termios) == -1)
+    if (tcgetattr(STDIN_FILENO, &editorData.original_termios) == -1)
         error_handler("tcgetattr at enable_terminal_raw_mode()");
     atexit(disable_terminal_raw_mode);
 
-    struct termios raw = E.original_termios;
+    struct termios raw = editorData.original_termios;
     raw.c_iflag &= ~(IXON | ICRNL);
     raw.c_oflag &= ~(OPOST);
     raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
@@ -103,29 +104,59 @@ void editor_process_keypress() {
     }
 }
 
+/*** screen buffer ***/
+
+typedef struct {
+    char* buffer;
+    int len;
+} screenBuffer;
+
+void screen_buffer_append(screenBuffer* sbuf, const char* str, int len) {
+    char* new = realloc(sbuf->buffer, sbuf->len + len);
+
+    if (new == NULL) {
+        return; 
+    }
+    memcpy(&new[sbuf->len], str, len);
+    sbuf->buffer = new;
+    sbuf->len += len;
+}
+
+void screen_buffer_free(screenBuffer* sbuf) {
+    free(sbuf->buffer);
+}
+
 /***rendering***/
 
-void editor_render_rows() {
-    int y;
-    for (y = 0; y < E.screenrows; y++) {
-        write(STDOUT_FILENO, "~", 1);
-        if (y < E.screenrows - 1) {
-            write(STDOUT_FILENO, "\r\n", 2);
+void editor_draw_rows(screenBuffer* sbuf) {
+    for (int y = 0; y < editorData.screenrows; y++) {
+        screen_buffer_append(sbuf, "~", 1);
+
+        screen_buffer_append(sbuf, "\x1b[K", 3);
+        if (y < editorData.screenrows - 1) {
+            screen_buffer_append(sbuf, "\r\n", 2);
         }
     } 
 }
 
 void editor_render_screen() {
-    clear_screen();
+    screenBuffer sbuf = {NULL, 0};
+    
+    screen_buffer_append(&sbuf, "\x1b[?25l", 6);
+    screen_buffer_append(&sbuf, "\x1b[H", 3);
+    
+    editor_draw_rows(&sbuf);
 
-    editor_render_rows();
-    write(STDOUT_FILENO, "\x1b[H", 3);
+    screen_buffer_append(&sbuf, "\x1b[H", 3);
+    screen_buffer_append(&sbuf, "\x1b[?25h", 6);
+
+    write(STDOUT_FILENO, sbuf.buffer, sbuf.len);
 }
 
 /***init***/
 
 void init_editor() {
-    if (get_window_size(&E.screenrows, &E.screencols) == -1) 
+    if (get_window_size(&editorData.screenrows, &editorData.screencols) == -1) 
         error_handler("get_window_size() in init_editor()");
 }
 
