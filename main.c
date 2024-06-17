@@ -13,7 +13,12 @@ enum editorKey {
     ARROW_LEFT = 1000,
     ARROW_RIGHT,
     ARROW_UP,
-    ARROW_DOWN
+    ARROW_DOWN, 
+    DELETE_KEY,
+    HOME_KEY,
+    END_KEY,
+    PAGE_UP,
+    PAGE_DOWN
 };
 
 typedef struct {
@@ -88,13 +93,42 @@ int editor_read_key() {
         if(read(STDIN_FILENO, &sequence[1], 1) != 1) return '\x1b';
 
         if (sequence[0] == '[') {
-            switch (sequence[1]) {
-                case 'A': return ARROW_UP;
-                case 'B': return ARROW_DOWN;
-                case 'C': return ARROW_RIGHT;
-                case 'D': return ARROW_LEFT;
+            if(sequence[1] >= 0 && sequence[1] <= 9) {
+                if(read(STDIN_FILENO, &sequence[2], 1) != 1) return '\x1b';
+                
+                if(sequence[2] == '~') {
+                    // ESC [ x ~
+                    switch (sequence[1]) {
+                        case 1: return HOME_KEY;
+                        case 3: return DELETE_KEY;
+                        case 4: return END_KEY;
+                        case 5: return PAGE_UP;
+                        case 6: return PAGE_DOWN;
+                        case 7: return HOME_KEY;
+                        case 8: return END_KEY;
+                    }
+                }
+            }
+            else {
+                // ESC [ X
+                switch (sequence[1]) {
+                    case 'A': return ARROW_UP;
+                    case 'B': return ARROW_DOWN;
+                    case 'C': return ARROW_RIGHT;
+                    case 'D': return ARROW_LEFT;
+                    case 'H': return HOME_KEY;
+                    case 'F': return END_KEY;
+                }
             }
         }
+        else if(sequence[0] == 'O') {
+            // ESC O X
+            switch (sequence[1]) {
+                case 'H': return HOME_KEY;
+                case 'F': return END_KEY;
+            } 
+        }
+
         return '\x1b';
     }
     else {
@@ -161,12 +195,39 @@ void editor_process_keypress() {
             exit(0);
             break;
         }
+        
         case ARROW_UP:
         case ARROW_DOWN:
         case ARROW_LEFT:
         case ARROW_RIGHT:
         {
             editor_move_cursor(c);
+            break;
+        }
+
+        case PAGE_UP:
+        {
+            for (int i = 0; i < editorData.screenrows; i++) {
+                editor_move_cursor(ARROW_UP);
+            }
+            break;
+        }
+        case PAGE_DOWN:
+        {
+            for (int i = 0; i < editorData.screencols; i++) {
+                editor_move_cursor(ARROW_DOWN);
+            }
+            break;
+        }
+
+        case HOME_KEY:
+        {
+            editorData.cx = 0;
+            break;
+        }
+        case END_KEY:
+        {
+            editorData.cx = editorData.screencols - 1;
             break;
         }
     }
