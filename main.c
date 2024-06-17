@@ -9,7 +9,15 @@
 
 #define KEY_CTRL(c) (c & 0x1f)
 
+enum editorKey {
+    ARROW_LEFT = 1000,
+    ARROW_RIGHT,
+    ARROW_UP,
+    ARROW_DOWN
+};
+
 typedef struct {
+    int cx, cy;
     int screenrows;
     int screencols;
     struct termios original_termios;
@@ -17,7 +25,7 @@ typedef struct {
 
 editorState editorData;
 
-/***Miscellaneous***/
+/*** Miscellaneous ***/
 
 void clear_screen() {
     write(STDOUT_FILENO, "\x1b[2J", 4);
@@ -25,13 +33,14 @@ void clear_screen() {
 }
 
 void error_handler(const char* s) {
-    clear_screen();
+    write(STDOUT_FILENO, "\x1b[2J", 4);
+    write(STDOUT_FILENO, "\x1b[H", 3);
 
     perror(s);
     exit(1);
 }
 
-/***terminal***/
+/*** terminal ***/
 
 void disable_terminal_raw_mode() {
     if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &editorData.original_termios) == -1) 
@@ -64,13 +73,34 @@ void enable_terminal_raw_mode() {
 }
 
 // Low-level function that deals with low level terminal input
-char editor_read_key() {
+int editor_read_key() {
     int nread;
     char c;
 
     while ((nread = read(STDIN_FILENO, &c, 1)) != 1){
         if(nread == -1 && errno != EAGAIN) error_handler("read() at editor_read_key()");
     }
+    
+    // detecting Escape Sequences:
+    if (c == '\x1b') {
+        char sequence[3];
+        if(read(STDIN_FILENO, &sequence[0], 1) != 1) return '\x1b';
+        if(read(STDIN_FILENO, &sequence[1], 1) != 1) return '\x1b';
+
+        if (sequence[0] == '[') {
+            switch (sequence[1]) {
+                case 'A': return ARROW_UP;
+                case 'B': return ARROW_DOWN;
+                case 'C': return ARROW_RIGHT;
+                case 'D': return ARROW_LEFT;
+            }
+        }
+        return '\x1b';
+    }
+    else {
+        return c;
+    }
+
     return c;
 }
 
@@ -87,18 +117,56 @@ int get_window_size(int* rows, int* cols) {
     }
 }
 
-/***input***/
+/*** input ***/
+
+void editor_move_cursor(int key) {
+    switch (key) {
+        case ARROW_UP: 
+        {
+            if(editorData.cy != 0) 
+                editorData.cy--;
+            break;
+        } 
+        case ARROW_DOWN: 
+        {
+            if(editorData.cy != editorData.screenrows - 1)
+                editorData.cy++;
+            break;
+        }
+        case ARROW_RIGHT: 
+        {
+            if(editorData.cx != editorData.screencols - 1)
+                editorData.cx++;
+            break;
+        }
+        case ARROW_LEFT: 
+        {
+            if(editorData.cx != 0)
+                editorData.cx--;
+            break;
+        }
+    }
+}
 
 // Function that deals with high-level input recieved from 
 // editor_read_key() function that takes low-level job.
 void editor_process_keypress() {
-    char c = editor_read_key();
+    int c = editor_read_key();
     
     switch (c) {
         case KEY_CTRL('q'):
         {
-            clear_screen();
+            write(STDOUT_FILENO, "\x1b[2J", 4);
+            write(STDOUT_FILENO, "\x1b[H", 3);            
             exit(0);
+            break;
+        }
+        case ARROW_UP:
+        case ARROW_DOWN:
+        case ARROW_LEFT:
+        case ARROW_RIGHT:
+        {
+            editor_move_cursor(c);
             break;
         }
     }
@@ -126,7 +194,7 @@ void screen_buffer_free(screenBuffer* sbuf) {
     free(sbuf->buffer);
 }
 
-/***rendering***/
+/*** rendering ***/
 
 void editor_draw_rows(screenBuffer* sbuf) {
     for (int y = 0; y < editorData.screenrows; y++) {
@@ -147,15 +215,19 @@ void editor_render_screen() {
     
     editor_draw_rows(&sbuf);
 
-    screen_buffer_append(&sbuf, "\x1b[H", 3);
+    char cursor_move[32];
+    snprintf(cursor_move, sizeof(cursor_move), "\x1b[%d;%dH", editorData.cy + 1, editorData.cx + 1);
+    screen_buffer_append(&sbuf, cursor_move, strlen(cursor_move));
     screen_buffer_append(&sbuf, "\x1b[?25h", 6);
 
     write(STDOUT_FILENO, sbuf.buffer, sbuf.len);
 }
 
-/***init***/
+/*** init ***/
 
 void init_editor() {
+    editorData.cx = 0;
+    editorData.cy = 0;
     if (get_window_size(&editorData.screenrows, &editorData.screencols) == -1) 
         error_handler("get_window_size() in init_editor()");
 }
