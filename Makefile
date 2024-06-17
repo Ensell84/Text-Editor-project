@@ -1,2 +1,2 @@
 text: main.c
-	$(CC) main.c -o text -Wall -Wextra -pedantic -std=c99
+	$(CC) main.c editor.c terminal.c rendering.c -o text -Wall -Wextra -pedantic -std=c99
