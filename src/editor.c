@@ -12,13 +12,12 @@ void editor_move_cursor(int key) {
             break;
         }
         case ARROW_DOWN: {
-            if(editorData.cy != editorData.screenrows - 1)
+            if(editorData.cy < editorData.numrows)
                 editorData.cy++;
             break;
         }
         case ARROW_RIGHT: {
-            if(editorData.cx != editorData.screencols - 1)
-                editorData.cx++;
+            editorData.cx++;
             break;
         }
         case ARROW_LEFT: {

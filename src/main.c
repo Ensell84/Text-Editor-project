@@ -9,6 +9,8 @@ editorState editorData;
 void init_editor() {
     editorData.cx = 0;
     editorData.cy = 0;
+    editorData.rowoff = 0;
+    editorData.coloff = 0;
     editorData.rows = NULL;
     editorData.numrows = 0;
     if (get_window_size(&editorData.screenrows, &editorData.screencols) == -1) 
@@ -27,7 +29,7 @@ int main(int argc, char** argv) {
         editor_process_keypress();
         editor_render_screen();
     }
-   
+     
     return 0;
 }
  

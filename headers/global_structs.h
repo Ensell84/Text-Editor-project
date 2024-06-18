@@ -24,6 +24,8 @@ typedef struct {
     int cx, cy;
     int screenrows;
     int screencols;
+    int rowoff;
+    int coloff;
     int numrows;
     Row* rows;
     struct termios original_termios;
