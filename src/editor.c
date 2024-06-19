@@ -6,6 +6,8 @@
 #include <stdlib.h>
 
 void editor_move_cursor(int key) {
+    Row* row = (editorData.cy >= editorData.numrows) ? NULL : &editorData.rows[editorData.cy];
+
     switch (key) {
         case ARROW_UP: {
             if(editorData.cy != 0) 
@@ -18,7 +20,9 @@ void editor_move_cursor(int key) {
             break;
         }
         case ARROW_RIGHT: {
-            editorData.cx++;
+            if (row && editorData.cx < row->size) {
+                editorData.cx++;
+            }
             break;
         }
         case ARROW_LEFT: {
@@ -26,6 +30,12 @@ void editor_move_cursor(int key) {
                 editorData.cx--;
             break;
         }
+    }
+
+    row = (editorData.cy >= editorData.numrows) ? NULL : &editorData.rows[editorData.cy];
+    int rowlength = row ? row->size : 0;
+    if (editorData.cx > rowlength) {
+        editorData.cx = rowlength;
     }
 }
 
