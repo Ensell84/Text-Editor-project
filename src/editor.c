@@ -1,5 +1,6 @@
 #include "global_structs.h"
 #include "editor.h"
+#include "rows_operation.h"
 #include "terminal.h"
 #include <unistd.h>
 #include <stdlib.h>
@@ -28,23 +29,60 @@ void editor_move_cursor(int key) {
     }
 }
 
+void editor_insert_char (int c) {
+    if (editorData.cy == editorData.numrows) {
+        editor_append_row("", 0);
+    }
+    editor_row_insert_symbol(&editorData.rows[editorData.cy], editorData.cx, c);
+    editorData.cx++;
+}
+
+void editor_delete_char () {
+    if (editorData.cy == editorData.numrows) {
+        return;
+    }
+    if (editorData.cx > 0) {
+        editor_row_delete_symbol(&editorData.rows[editorData.cy], editorData.cx - 1);
+        editorData.cx--;
+    }
+}
+
 // Function that deals with high-level input recieved from
 // editor_read_key() function that takes low-level job.
 void editor_process_keypress() {
     int c = editor_read_key();
     
     switch (c) {
-        case KEY_CTRL('q'):
+        case '\r': {
+            // TODO:
+            break;
+        }
+
+        case BACKSPACE:
+        case KEY_CTRL('h'):
+        case DELETE_KEY: {
+            if (c == DELETE_KEY) editor_move_cursor(ARROW_RIGHT);
+            editor_delete_char();
+            break;
+        }
+
+        case KEY_CTRL('q'): {
             write(STDOUT_FILENO, "\x1b[2J", 4);
             write(STDOUT_FILENO, "\x1b[H", 3);            
             exit(0);
+        }
+        case KEY_CTRL('s'): {
+            editor_save();
+            break;
+        }
 
         case ARROW_UP:
         case ARROW_DOWN:
         case ARROW_LEFT:
-        case ARROW_RIGHT:
+        case ARROW_RIGHT: {
             editor_move_cursor(c);
             break;
+        }
 
         case PAGE_UP: {
             for (int i = 0; i < editorData.screenrows; i++) {
@@ -67,6 +105,16 @@ void editor_process_keypress() {
             editorData.cx = editorData.screencols - 1;
             break;
         }
+        
+        // ignoring ESC press and CTRL+L
+        case KEY_CTRL('l'):
+        case '\x1b': {
+            break;
+        }
+
+        default: {
+            editor_insert_char(c);
+            break;
+        }
     }
-}
- 
+} 

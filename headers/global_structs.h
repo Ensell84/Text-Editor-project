@@ -4,6 +4,7 @@
 #include <termios.h>
 
 enum editorKey {
+    BACKSPACE = 127,
     ARROW_LEFT = 1000,
     ARROW_RIGHT,
     ARROW_UP,
@@ -29,6 +30,7 @@ typedef struct {
     int numrows;
     Row* rows;
     struct termios original_termios;
+    char* filename;
 } editorState;
 
 extern editorState editorData;

@@ -7,5 +7,6 @@ int editor_read_key();
 void error_handler(const char* s);
 int get_window_size(int* rows, int* cols);
 void editor_open(char* filename);
+void editor_save(); 
 
 #endif

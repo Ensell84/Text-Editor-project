@@ -7,6 +7,7 @@
 editorState editorData;
 
 void init_editor() {
+    editorData.filename = NULL;
     editorData.cx = 0;
     editorData.cy = 0;
     editorData.rowoff = 0;
@@ -22,6 +23,7 @@ int main(int argc, char** argv) {
     init_editor();
     if (argc >= 2) {
         editor_open(argv[1]);
+        editorData.filename = argv[1];
     }
     
     editor_render_screen();

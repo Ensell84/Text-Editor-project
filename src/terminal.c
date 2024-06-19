@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
 
 void error_handler(const char* s) {
@@ -133,3 +135,45 @@ void editor_open(char* filename) {
     fclose(f);
 }
 
+char* editor_rows_to_string(int* buflen) {
+    int totallen = 0;
+    for (int i = 0; i < editorData.numrows; i++) {
+        totallen += editorData.rows[i].size + 1; 
+    }
+    *buflen = totallen;
+
+    char* buffer = malloc(totallen);
+    char* buf_point = buffer;
+    for (int i = 0; i < editorData.numrows; i++) {
+        memcpy(buf_point, editorData.rows[i].row, editorData.rows[i].size); 
+        buf_point += editorData.rows[i].size;
+
+        *buf_point = '\n';
+        buf_point++;
+    }
+    return buffer;
+}
+
+void editor_save() {
+    if (editorData.filename == NULL) return;
+    
+    int length;
+    char* buffer = editor_rows_to_string(&length);
+    
+    int fd = open(editorData.filename, O_RDWR | O_CREAT, 0644);
+
+    // 0644 - standart permission (creator - can read/write, others - can read)
+    if (fd != -1) {
+        if (ftruncate(fd, length) != -1) {
+            // usually O_TRUNC - used, but ftruncate - safer
+            if (write(fd, buffer, length) == length) {
+                close(fd);
+                free(buffer);
+                return;
+            }
+        }
+        close(fd);
+    }
+
+    free(buffer);
+}
